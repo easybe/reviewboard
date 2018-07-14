@@ -474,7 +474,7 @@ class TestCase(FixturesCompilerMixin, DjbletsTestCase):
     def create_filediff(self, diffset, source_file='/test-file',
                         dest_file='/test-file', source_revision='123',
                         dest_detail='124', status=FileDiff.MODIFIED,
-                        diff=DEFAULT_FILEDIFF_DATA, save=True):
+                        diff=DEFAULT_FILEDIFF_DATA, crlf=False, save=True):
         """Create a FileDiff for testing.
 
         The FileDiff is tied to the given DiffSet. It's populated with
@@ -519,7 +519,8 @@ class TestCase(FixturesCompilerMixin, DjbletsTestCase):
             source_revision=source_revision,
             dest_detail=dest_detail,
             status=status,
-            diff=diff)
+            diff=diff,
+            crlf=crlf)
 
         if save:
             filediff.save()
