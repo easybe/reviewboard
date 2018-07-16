@@ -33,9 +33,17 @@ DIFF_UNIFIED = [B('-u')]
 SVN_KEYWORDS = B('svn:keywords')
 
 
+def log(func):
+    def wrapper(*args, **kwargs):
+        logging.debug(func.__name__)
+        return func(*args, **kwargs)
+    return wrapper
+
+
 class Client(base.Client):
     required_module = 'subvertpy'
 
+    @log
     def __init__(self, config_dir, repopath, username=None, password=None):
         super(Client, self).__init__(config_dir, repopath, username, password)
         self.repopath = B(self.repopath)
@@ -67,9 +75,11 @@ class Client(base.Client):
         cfg = get_config(self.config_dir)
         self.client = SVNClient(cfg, auth=self.auth)
 
+    @log
     def set_ssl_server_trust_prompt(self, cb):
         self._ssl_trust_prompt_cb = cb
 
+    @log
     def get_file(self, path, revision=HEAD):
         """Returns the contents of a given file at the given revision."""
         if not path:
@@ -87,12 +97,14 @@ class Client(base.Client):
             contents = self.collapse_keywords(contents, keywords)
         return contents
 
+    @log
     def get_keywords(self, path, revision=HEAD):
         """Returns a list of SVN keywords for a given path."""
         revnum = self._normalize_revision(revision, negatives_allowed=False)
         path = self.normalize_path(path)
         return self.client.propget(SVN_KEYWORDS, path, None, revnum).get(path)
 
+    @log
     def _normalize_revision(self, revision, negatives_allowed=True):
         if revision is None:
             return None
@@ -107,6 +119,7 @@ class Client(base.Client):
 
         return revision
 
+    @log
     @property
     def repository_info(self):
         """Returns metadata about the repository:
@@ -127,6 +140,7 @@ class Client(base.Client):
             'url': info.url
         }
 
+    @log
     def ssl_trust_prompt(self, realm, failures, certinfo, may_save):
         """
         Callback for ``subvertpy.ra.get_ssl_server_trust_prompt_provider``.
@@ -153,6 +167,7 @@ class Client(base.Client):
         else:
             return None
 
+    @log
     def accept_ssl_certificate(self, path, on_failure=None):
         """If the repository uses SSL, this method is used to determine whether
         the SSL certificate can be automatically accepted.
@@ -215,6 +230,7 @@ class Client(base.Client):
 
         return cert
 
+    @log
     def get_log(self, path, start=None, end=None, limit=None,
                 discover_changed_paths=False, limit_to_path=False):
         """Returns log entries at the specified path.
@@ -262,6 +278,7 @@ class Client(base.Client):
 
         return commits
 
+    @log
     def list_dir(self, path):
         """Lists the contents of the specified path.
 
