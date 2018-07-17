@@ -48,3 +48,15 @@ class DiffParserTest(TestCase):
         self.assertEqual(len(files), 1)
         self.assertEqual(files[0].insert_count, 3)
         self.assertEqual(files[0].delete_count, 4)
+
+    def test_crlf(self):
+        """Testing DiffParser with a CRLF diff"""
+        diff = (
+            b'--- README\trevision 123\r\n'
+            b'+++ README\trevision 123\r\n'
+            b'@@ -1 +1 @@\r\n'
+            b'-Hello, world!\r\n'
+            b'+Hello, everybody!\r\n')
+        parser = DiffParser(diff)
+
+        self.assertTrue(parser.crlf)
