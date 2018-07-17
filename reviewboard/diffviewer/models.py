@@ -190,6 +190,8 @@ class FileDiff(models.Model):
         null=True,
         blank=True)
 
+    crlf = models.BooleanField(_("crlf line endings"), default=False)
+
     extra_data = JSONField(null=True)
 
     objects = FileDiffManager()
@@ -245,7 +247,12 @@ class FileDiff(models.Model):
         if self._needs_diff_migration():
             self._migrate_diff_data()
 
-        return self.diff_hash.content
+        diff = self.diff_hash.content
+
+        if self.crlf:
+            diff = diff.replace(b'\n', b'\r\n')
+
+        return diff
 
     def _set_diff(self, diff):
         # Add hash to table if it doesn't exist, and set diff_hash to this.
