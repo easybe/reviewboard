@@ -103,6 +103,7 @@ class DiffParser(object):
         self.new_commit_id = None
         self.data = data
         self.lines = split_line_endings(data)
+        self.crlf = b'\r\n' in data
 
     def parse(self):
         """

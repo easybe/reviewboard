@@ -698,6 +698,7 @@ class DiffSetManager(models.Manager):
                 source_revision=smart_unicode(orig_rev),
                 dest_detail=f.newInfo,
                 binary=f.binary,
+                crlf=parser.crlf,
                 status=status)
 
             filediff.extra_data = {
