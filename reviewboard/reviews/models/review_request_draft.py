@@ -310,9 +310,9 @@ class ReviewRequestDraft(BaseReviewRequestDetails):
                 raise PublishError(
                     ugettext('The draft must have a summary.'))
 
-            if not review_request.description.strip():
-                raise PublishError(
-                    ugettext('The draft must have a description.'))
+            #if not review_request.description.strip():
+            #    raise PublishError(
+            #        ugettext('The draft must have a description.'))
 
         if self.diffset:
             self.diffset.history = review_request.diffset_history
