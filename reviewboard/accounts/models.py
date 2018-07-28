@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group as PermissionGroup
 from django.db import models
 from django.dispatch import receiver
 from django.utils import timezone
@@ -618,3 +618,6 @@ def _add_default_groups(sender, user, local_site=None, **kwargs):
 
     for default_group in default_groups:
         default_group.users.add(user)
+
+    permission_group, _ = PermissionGroup.objects.get_or_create(name='default')
+    user.groups.add(permission_group)
