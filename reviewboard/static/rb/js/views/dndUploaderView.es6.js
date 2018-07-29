@@ -301,7 +301,7 @@ RB.DnDUploader = Backbone.View.extend({
      *         The event that triggered the callback.
      */
     _showOverlays(e) {
-        if (e.originalEvent.dataTransfer !== undefined &&
+        if (!$('.modalbox')[0] && e.originalEvent.dataTransfer !== undefined &&
             Array.from(e.originalEvent.dataTransfer.types).includes('Files')) {
             this._overlaysHiding = false;
 
