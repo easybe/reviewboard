@@ -2,10 +2,15 @@ from __future__ import unicode_literals
 
 import os
 
+from mock import Mock
+from nose.plugins.logcapture import LogCapture
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext as _
 
+from reviewboard.hostingsvcs.models import HostingServiceAccount
 from reviewboard.scmtools.core import HEAD
+from reviewboard.scmtools.errors import DecryptPasswordError
 from reviewboard.scmtools.models import Repository, Tool
 from reviewboard.scmtools.signals import (checked_file_exists,
                                           checking_file_exists,
@@ -335,3 +340,58 @@ class RepositoryTests(TestCase):
             tool=Tool.objects.get(name='Git'))
 
         self.assertEqual(len(self.repository.name), 255)
+
+    def test_password(self):
+        """Testing Repository.password"""
+        password = "P4ssw0rd!"
+        self.repository = Repository.objects.create(name='New test repo',
+                                                    path=self.repository.path,
+                                                    tool=self.repository.tool)
+        self.repository.password = password
+
+        self.assertEqual(self.repository.password, password)
+
+    def test_password_with_invalid_data(self):
+        """Testing Repository.password with invalid data"""
+        invalid = '\t!ZshCbwfSv5kOae46Dihj4xzvu8Cedw59Q=='
+        self.repository = Repository.objects.create(name='New test repo',
+                                                    path=self.repository.path,
+                                                    tool=self.repository.tool,
+                                                    encrypted_password=invalid)
+        lc = LogCapture()
+        lc.begin()
+        password = self.repository.password
+        lc.end()
+
+        self.assertEqual(password, None)
+        log_msg = _(
+            'Unable to decode the password for repository. This may be caused '
+            'by a change in settings.SECRET_KEY or bad encoded data from a '
+            'database import.')
+        self.assertIn(log_msg, lc.handler.buffer[0])
+
+    def test_get_credentials_with_hosting_service_decrypt_password_error(self):
+        """Testing Repository.get_credentials() with hosting service unable
+           to decrypt password"""
+        invalid = '\t!ZshCbwfSv5kOae46Dihj4xzvu8Cedw59Q=='
+        hosting = HostingServiceAccount.objects.create(service_name='test',
+                                                       username='myuser')
+        hosting._service = Mock()
+        hosting._service.get_password = Mock(
+            side_effect=DecryptPasswordError())
+        self.repository = Repository.objects.create(name='New test repo',
+                                                    path=self.repository.path,
+                                                    tool=self.repository.tool,
+                                                    encrypted_password=invalid,
+                                                    hosting_account=hosting)
+        lc = LogCapture()
+        lc.begin()
+        credentials = self.repository.get_credentials()
+        lc.end()
+
+        self.assertEqual(credentials['password'], None)
+        log_msg = _(
+            'Unable to decode the password for repository. This may be caused '
+            'by a change in settings.SECRET_KEY or bad encoded data from a '
+            'database import.')
+        self.assertIn(log_msg, lc.handler.buffer[0])

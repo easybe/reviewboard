@@ -110,3 +110,12 @@ class UnverifiedCertificateError(SCMError):
         SCMError.__init__(self, _('A verified SSL certificate is required '
                                   'to connect to this repository.'))
         self.certificate = certificate
+
+
+class DecryptPasswordError(SCMError):
+    """An error indicating that a password could not be decryted."""
+    def __init__(self):
+        SCMError.__init__(self, _(
+            'Unable to decode the password for repository. This may be caused '
+            'by a change in settings.SECRET_KEY or bad encoded data from a '
+            'database import.'))

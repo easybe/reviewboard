@@ -10,6 +10,7 @@ from django.conf import settings
 from django.utils import six
 
 from reviewboard.deprecation import RemovedInReviewBoard40Warning
+from reviewboard.scmtools.errors import DecryptPasswordError
 
 
 AES_BLOCK_SIZE = algorithms.AES.block_size / 8
@@ -176,7 +177,15 @@ def decrypt_password(encrypted_password, key=None):
         ValueError:
             The encryption key was not in the right format.
     """
-    return aes_decrypt(base64.b64decode(encrypted_password), key=key)
+    password = None
+    try:
+        password = aes_decrypt(base64.b64decode(encrypted_password), key=key)
+        # Check if the password can be interpreted as UTF-8.
+        password.decode('utf-8')
+    except (ValueError, TypeError, UnicodeDecodeError):
+        raise DecryptPasswordError()
+
+    return password
 
 
 # The following are deprecated. They're likely not used anywhere, but we

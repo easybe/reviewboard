@@ -26,6 +26,7 @@ from reviewboard.hostingsvcs.models import HostingServiceAccount
 from reviewboard.hostingsvcs.service import get_hosting_service
 from reviewboard.scmtools.crypto_utils import (decrypt_password,
                                                encrypt_password)
+from reviewboard.scmtools.errors import DecryptPasswordError
 from reviewboard.scmtools.managers import RepositoryManager, ToolManager
 from reviewboard.scmtools.signals import (checked_file_exists,
                                           checking_file_exists,
@@ -221,7 +222,11 @@ class Repository(models.Model):
             password = password[len(self.ENCRYPTED_PASSWORD_PREFIX):]
 
             if password:
-                password = decrypt_password(password).decode('utf-8')
+                try:
+                    password = decrypt_password(password).decode('utf-8')
+                except DecryptPasswordError as e:
+                    logging.exception(e)
+                    password = None
             else:
                 password = None
         else:
@@ -331,7 +336,12 @@ class Repository(models.Model):
 
         if self.hosting_account and self.hosting_account.service:
             username = username or self.hosting_account.username
-            password = password or self.hosting_account.service.get_password()
+            try:
+                if not password:
+                    password = self.hosting_account.service.get_password()
+            except DecryptPasswordError as e:
+                logging.exception(e)
+                password = None
 
         return {
             'username': username,

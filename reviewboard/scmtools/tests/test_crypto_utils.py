@@ -12,6 +12,7 @@ from reviewboard.scmtools.crypto_utils import (aes_decrypt,
                                                encrypt,
                                                encrypt_password,
                                                get_default_aes_encryption_key)
+from reviewboard.scmtools.errors import DecryptPasswordError
 from reviewboard.testing.testcase import TestCase
 
 
@@ -106,6 +107,34 @@ class CryptoUtilsTests(TestCase):
 
         self.assertEqual(decrypt_password(encrypted, key=self.CUSTOM_KEY),
                          self.PLAIN_TEXT)
+
+    def test_decrypt_password_with_short_key(self):
+        """Testing decrypt_password with too short key"""
+        # The encrypted value was made with PyCrypto, to help with
+        # compatibility testing from older installs.
+        encrypted = b'/pOO3VWHRXd1ZAeHZo8MBGQsNClD4lS7XK9WAydt8zW/ob+e63E='
+        short_key = b'0123456789'  # -> ValueError
+
+        self.assertRaises(DecryptPasswordError,
+                          decrypt_password, encrypted, key=short_key)
+
+    def test_decrypt_password_with_wrong_key(self):
+        """Testing decrypt_password with wrong key"""
+        # The encrypted value was made with PyCrypto, to help with
+        # compatibility testing from older installs.
+        encrypted = b'/pOO3VWHRXd1ZAeHZo8MBGQsNClD4lS7XK9WAydt8zW/ob+e63E='
+        wrong_key = b'abcdef0123456789'  # -> UnicodeDecodeError
+
+        self.assertRaises(DecryptPasswordError,
+                          decrypt_password, encrypted, key=wrong_key)
+
+    def test_decrypt_password_with_invalid_data(self):
+        """Testing decrypt_password with invalid data"""
+        # "!" is not part of the base-64 alphabet -> TypeError
+        encrypted = b'!pOO3VWHRXd1ZAeHZo8MBGQsNClD4lS7XK9WAydt8zW/ob+e63E='
+
+        self.assertRaises(DecryptPasswordError,
+                          decrypt_password, encrypted, key=self.CUSTOM_KEY)
 
     def test_encrypt_password(self):
         """Testing encrypt_password"""
