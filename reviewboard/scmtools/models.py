@@ -218,7 +218,12 @@ class Repository(models.Model):
             password = password[len(self.ENCRYPTED_PASSWORD_PREFIX):]
 
             if password:
-                password = decrypt_password(password).decode('utf-8')
+                try:
+                    password = decrypt_password(password).decode('utf-8')
+                except UnicodeDecodeError:
+                    s = "Unable to decode password for repository %d" % self.pk
+                    logging.error(s)
+                    password = None
             else:
                 password = None
         else:
